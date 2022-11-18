@@ -1,4 +1,5 @@
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
+import { userInfo } from "os";
 import invariant from "tiny-invariant";
 
 import type { User } from "~/models/user.server";
@@ -61,6 +62,18 @@ export async function requireUser(request: Request) {
   if (user) return user;
 
   throw await logout(request);
+}
+
+// This setup is for restricting non-admin users from accessnig admin users pages
+// you can add this function to any route and if the user is not the admin user then it will throw the logout(request) to 
+// destroy the session for the user. 
+export async function requireAdminUser(request: Request){
+    const user = await requireUser(request)
+    if (user.email !== ENV.ADMIN_EMAIL) {
+      throw await logout(request)
+    }
+
+    return user;
 }
 
 export async function createUserSession({
